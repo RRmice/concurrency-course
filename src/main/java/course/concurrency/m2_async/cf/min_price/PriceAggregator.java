@@ -32,18 +32,12 @@ public class PriceAggregator {
                         .exceptionally(ex -> Double.NaN))
                 .collect(Collectors.toList());
 
-        try {
-            value = CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
-                    .thenApply(future -> futures.stream()
-                    .mapToDouble(CompletableFuture::join)
-                    .filter(val -> !Double.isNaN(val))
-                    .min())
-                    .get().orElse(Double.NaN);
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
 
-        return value;
-
+        return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
+                .thenApply(future -> futures.stream()
+                        .mapToDouble(CompletableFuture::join)
+                        .filter(val -> !Double.isNaN(val))
+                        .min())
+                .join().orElse(Double.NaN);
     }
 }
