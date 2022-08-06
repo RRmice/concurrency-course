@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -23,10 +22,7 @@ public class PriceAggregator {
     }
 
     public double getMinPrice(long itemId) {
-
-        double value = Double.NaN;
-
-        List<CompletableFuture<Double>> futures = shopIds.stream().map(shopId -> CompletableFuture.supplyAsync(
+                List<CompletableFuture<Double>> futures = shopIds.stream().map(shopId -> CompletableFuture.supplyAsync(
                                 () -> priceRetriever.getPrice(itemId, shopId))
                         .completeOnTimeout(Double.NaN, 2950L, TimeUnit.MILLISECONDS)
                         .exceptionally(ex -> Double.NaN))
