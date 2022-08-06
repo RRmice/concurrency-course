@@ -9,7 +9,6 @@ import java.util.concurrent.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@Disabled
 public class RestaurantServiceTests {
 
     private static final int TEST_COUNT = 10;
