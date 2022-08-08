@@ -45,12 +45,14 @@ public class AuctionTests {
         stat.printStatistics();
     }
 
+
     @RepeatedTest(TEST_COUNT)
     public void testOptimistic() throws InterruptedException {
         AuctionOptimistic auction = new AuctionOptimistic(notifier);
         testCorrectLatestBid(auction, "optimistic");
     }
 
+    @Disabled
     @RepeatedTest(TEST_COUNT)
     public void testPessimistic() throws InterruptedException {
         AuctionPessimistic auction = new AuctionPessimistic(notifier);
