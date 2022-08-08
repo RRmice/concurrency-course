@@ -18,17 +18,18 @@ public class AuctionOptimistic implements Auction {
 
     public boolean propose(Bid bid) {
         if (bid == null) return false;
-        AtomicReference<Bid> cache = new AtomicReference<>();
+        Bid cache = null;
 
         do {
-            cache.set(latestBid.get());
-            if (!(bid.price > cache.get().price)) {
+            cache = latestBid.get();
+            if (!(bid.price > cache.price)) {
                 return false;
             }
-        } while (!latestBid.compareAndSet(cache.get(), bid));
+        } while (!latestBid.compareAndSet(cache, bid));
 
         if (latestBid.get().id.equals(bid.id)){
-            CompletableFuture.runAsync(() -> notifier.sendOutdatedMessage(cache.get()), executorService);
+            Bid finalCache = cache;
+            CompletableFuture.runAsync(() -> notifier.sendOutdatedMessage(finalCache), executorService);
         }
         return true;
     }
