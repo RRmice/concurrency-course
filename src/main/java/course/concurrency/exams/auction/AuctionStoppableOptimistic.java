@@ -7,9 +7,11 @@ public class AuctionStoppableOptimistic implements AuctionStoppable {
 
     private final Notifier notifier;
     private final AtomicReference<Bid> latestBid = new AtomicReference<>();
+    private volatile boolean stopped;
 
     public AuctionStoppableOptimistic(Notifier notifier) {
         this.notifier = notifier;
+        this.stopped = false;
     }
 
     public boolean propose(Bid bid) {
@@ -27,6 +29,9 @@ public class AuctionStoppableOptimistic implements AuctionStoppable {
     }
 
     private boolean updateAndSend(Bid expected, Bid newValue) {
+        if (stopped) {
+            return true;
+        }
         if (latestBid.compareAndSet(expected, newValue)) {
             CompletableFuture.runAsync(() -> notifier.sendOutdatedMessage(expected));
             return false;
@@ -39,7 +44,7 @@ public class AuctionStoppableOptimistic implements AuctionStoppable {
     }
 
     public Bid stopAuction() {
-        // ваш код
+        stopped = true;
         return latestBid.get();
     }
 }
