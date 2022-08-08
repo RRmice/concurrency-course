@@ -1,15 +1,19 @@
 package course.concurrency.exams.auction;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class AuctionOptimistic implements Auction {
 
     private final Notifier notifier;
     private final AtomicReference<Bid> latestBid = new AtomicReference<>();
+    private final ExecutorService executorService = new ForkJoinPool();
 
     public AuctionOptimistic(Notifier notifier) {
         this.notifier = notifier;
+        latestBid.set(new Bid(-1L, -1L, -1L));
     }
 
     public boolean propose(Bid bid) {
@@ -18,18 +22,14 @@ public class AuctionOptimistic implements Auction {
 
         do {
             cache = latestBid.get();
-            if (!(cache == null || bid.price > cache.price)) {
+            if (!(bid.price > cache.price)) {
                 return false;
             }
-        } while (updateAndSend(cache, bid));
+        } while (!latestBid.compareAndSet(cache, bid));
 
-        return true;
-    }
-
-    private boolean updateAndSend(Bid expected, Bid newValue) {
-        if (latestBid.compareAndSet(expected, newValue)) {
-            CompletableFuture.runAsync(() -> notifier.sendOutdatedMessage(expected));
-            return false;
+        if (latestBid.get().id.equals(bid.id)){
+            Bid finalCache = cache;
+            CompletableFuture.runAsync(() -> notifier.sendOutdatedMessage(finalCache), executorService);
         }
         return true;
     }

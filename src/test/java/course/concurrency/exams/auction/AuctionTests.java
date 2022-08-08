@@ -45,6 +45,7 @@ public class AuctionTests {
         stat.printStatistics();
     }
 
+    @Deprecated
     @RepeatedTest(TEST_COUNT)
     public void testOptimistic() throws InterruptedException {
         AuctionOptimistic auction = new AuctionOptimistic(notifier);
