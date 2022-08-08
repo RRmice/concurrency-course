@@ -2,12 +2,18 @@ package course.concurrency.exams.auction;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class AuctionStoppableOptimistic implements AuctionStoppable {
 
     private final Notifier notifier;
     private final AtomicReference<Bid> latestBid = new AtomicReference<>();
     private volatile boolean stopped;
+    private ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    private Lock writeLock = readWriteLock.writeLock();
+    private Lock readLock = readWriteLock.readLock();
+
 
     public AuctionStoppableOptimistic(Notifier notifier) {
         this.notifier = notifier;
@@ -29,9 +35,15 @@ public class AuctionStoppableOptimistic implements AuctionStoppable {
     }
 
     private boolean updateAndSend(Bid expected, Bid newValue) {
-        if (stopped) {
-            return true;
-        }
+       try {
+           readLock.lock();
+           if (stopped) {
+               return true;
+           }
+       } finally {
+           readLock.unlock();
+       }
+
         if (latestBid.compareAndSet(expected, newValue)) {
             CompletableFuture.runAsync(() -> notifier.sendOutdatedMessage(expected));
             return false;
@@ -44,7 +56,12 @@ public class AuctionStoppableOptimistic implements AuctionStoppable {
     }
 
     public Bid stopAuction() {
-        stopped = true;
+        try {
+            writeLock.lock();
+            stopped = true;
+        } finally {
+            writeLock.unlock();
+        }
         return latestBid.get();
     }
 }
