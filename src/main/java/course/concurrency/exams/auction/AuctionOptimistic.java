@@ -26,7 +26,7 @@ public class AuctionOptimistic implements Auction {
         return true;
     }
 
-    public boolean updateAndSend(Bid expected, Bid newValue) {
+    private boolean updateAndSend(Bid expected, Bid newValue) {
         if (latestBid.compareAndSet(expected, newValue)) {
             CompletableFuture.runAsync(() -> notifier.sendOutdatedMessage(expected));
             return false;

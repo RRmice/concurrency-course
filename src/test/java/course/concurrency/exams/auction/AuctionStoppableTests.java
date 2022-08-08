@@ -52,6 +52,7 @@ public class AuctionStoppableTests {
         testCorrectLatestBid(pessimistic, "pessimistic");
     }
 
+    @Disabled
     @RepeatedTest(TEST_COUNT)
     public void testOptimistic() throws InterruptedException {
         AuctionStoppable optimistic = new AuctionStoppableOptimistic(notifier);

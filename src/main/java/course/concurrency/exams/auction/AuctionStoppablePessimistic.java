@@ -1,22 +1,24 @@
 package course.concurrency.exams.auction;
 
+import java.util.concurrent.CompletableFuture;
+
 public class AuctionStoppablePessimistic implements AuctionStoppable {
 
     private Notifier notifier;
+    private volatile Bid latestBid;
 
     public AuctionStoppablePessimistic(Notifier notifier) {
         this.notifier = notifier;
     }
 
-    private Bid latestBid;
-
-    public boolean propose(Bid bid) {
-        if (bid.price > latestBid.price) {
-            notifier.sendOutdatedMessage(latestBid);
+    public synchronized boolean propose(Bid bid) {
+        boolean result = false;
+        if (latestBid == null || bid.price > latestBid.price) {
+            CompletableFuture.runAsync(() -> notifier.sendOutdatedMessage(latestBid));
             latestBid = bid;
-            return true;
+            result = true;
         }
-        return false;
+        return result;
     }
 
     public Bid getLatestBid() {
