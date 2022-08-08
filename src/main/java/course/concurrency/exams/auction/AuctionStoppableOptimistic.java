@@ -9,10 +9,10 @@ public class AuctionStoppableOptimistic implements AuctionStoppable {
 
     private final Notifier notifier;
     private final AtomicReference<Bid> latestBid = new AtomicReference<>();
-    private volatile boolean stopped;
-    private ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-    private Lock writeLock = readWriteLock.writeLock();
-    private Lock readLock = readWriteLock.readLock();
+    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    private final Lock writeLock = readWriteLock.writeLock();
+    private final Lock readLock = readWriteLock.readLock();
+    private boolean stopped;
 
 
     public AuctionStoppableOptimistic(Notifier notifier) {
