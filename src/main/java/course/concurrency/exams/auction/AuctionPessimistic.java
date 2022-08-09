@@ -4,17 +4,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class AuctionPessimistic implements Auction {
 
     private final Notifier notifier;
     private volatile Bid latestBid;
-    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private final Lock writeLock = lock.writeLock();
-    private final Lock readLock = lock.readLock();
     private final ExecutorService executorService = new ForkJoinPool();
+    private final Object monitor = new Object();
 
     public AuctionPessimistic(Notifier notifier) {
         this.notifier = notifier;
@@ -23,24 +19,18 @@ public class AuctionPessimistic implements Auction {
 
     public boolean propose(Bid bid) {
         if (bid.price > latestBid.price) {
-            try {
-                writeLock.lock();
-                latestBid = bid;
-            } finally {
-                writeLock.unlock();
+            synchronized (monitor) {
+                if (bid.price > latestBid.price) {
+                    latestBid = bid;
+                    CompletableFuture.runAsync(() -> notifier.sendOutdatedMessage(latestBid), executorService);
+                    return true;
+                }
             }
-            CompletableFuture.runAsync(() -> notifier.sendOutdatedMessage(latestBid), executorService);
-            return true;
         }
         return false;
     }
 
     public Bid getLatestBid() {
-        try {
-            readLock.lock();
-            return latestBid;
-        } finally {
-            readLock.unlock();
-        }
+        return latestBid;
     }
 }

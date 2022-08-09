@@ -17,7 +17,6 @@ public class AuctionOptimistic implements Auction {
     }
 
     public boolean propose(Bid bid) {
-        if (bid == null) return false;
         Bid cache = null;
 
         do {
@@ -27,10 +26,8 @@ public class AuctionOptimistic implements Auction {
             }
         } while (!latestBid.compareAndSet(cache, bid));
 
-        if (latestBid.get().id.equals(bid.id)){
-            Bid finalCache = cache;
-            CompletableFuture.runAsync(() -> notifier.sendOutdatedMessage(finalCache), executorService);
-        }
+        Bid finalCache = cache;
+        CompletableFuture.runAsync(() -> notifier.sendOutdatedMessage(finalCache), executorService);
         return true;
     }
 
