@@ -9,7 +9,6 @@ public class AuctionPessimistic implements Auction {
 
     private final Notifier notifier;
     private volatile Bid latestBid;
-    private final ExecutorService executorService = new ForkJoinPool();
     private final Object monitor = new Object();
 
     public AuctionPessimistic(Notifier notifier) {

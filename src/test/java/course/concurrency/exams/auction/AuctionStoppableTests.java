@@ -46,12 +46,11 @@ public class AuctionStoppableTests {
         stat.printStatistics();
     }
 
-//    @Disabled
-//    @RepeatedTest(TEST_COUNT)
-//    public void testPessimistic() throws InterruptedException {
-//        AuctionStoppable pessimistic = new AuctionStoppablePessimistic(notifier);
-//        testCorrectLatestBid(pessimistic, "pessimistic");
-//    }
+    @RepeatedTest(TEST_COUNT)
+    public void testPessimistic() throws InterruptedException {
+        AuctionStoppable pessimistic = new AuctionStoppablePessimistic(notifier);
+        testCorrectLatestBid(pessimistic, "pessimistic");
+    }
 
     @Disabled
     @RepeatedTest(TEST_COUNT)
