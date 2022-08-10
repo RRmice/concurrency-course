@@ -22,7 +22,7 @@ public class AuctionPessimistic implements Auction {
             synchronized (monitor) {
                 if (bid.price > latestBid.price) {
                     latestBid = bid;
-                    CompletableFuture.runAsync(() -> notifier.sendOutdatedMessage(latestBid), executorService);
+                    notifier.sendOutdatedMessage(latestBid);
                     return true;
                 }
             }
