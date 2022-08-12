@@ -14,7 +14,7 @@ public class AuctionStoppablePessimistic implements AuctionStoppable {
     }
 
     public boolean propose(Bid bid) {
-        if (bid.price > latestBid.price) {
+        if (bid.price > latestBid.price && inProgress) {
             synchronized (monitor) {
                 if (bid.price > latestBid.price && inProgress) {
                     latestBid = bid;
