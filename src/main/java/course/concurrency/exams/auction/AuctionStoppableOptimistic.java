@@ -20,7 +20,7 @@ public class AuctionStoppableOptimistic implements AuctionStoppable {
             if (!(bid.price > cache.price) || !latestBid.isMarked()) {
                 return false;
             }
-        } while (latestBid.compareAndSet(cache, bid, true, true));
+        } while (!latestBid.compareAndSet(cache, bid, true, true));
 
         notifier.sendOutdatedMessage(cache);
         return true;
