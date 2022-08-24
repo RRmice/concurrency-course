@@ -13,8 +13,8 @@ public class AuctionStoppablePessimistic implements AuctionStoppable {
         latestBid = new Bid(-1L, -1L, -1L);
     }
 
-    public synchronized boolean propose(Bid bid) {
-        if (bid.price > latestBid.price) {
+    public boolean propose(Bid bid) {
+        if (bid.price > latestBid.price && inProgress) {
             synchronized (monitor) {
                 if (bid.price > latestBid.price && inProgress) {
                     latestBid = bid;
@@ -26,11 +26,11 @@ public class AuctionStoppablePessimistic implements AuctionStoppable {
         return false;
     }
 
-    public synchronized Bid getLatestBid() {
+    public Bid getLatestBid() {
         return latestBid;
     }
 
-    public synchronized Bid stopAuction() {
+    public Bid stopAuction() {
         synchronized (monitor){
             inProgress = false;
         }

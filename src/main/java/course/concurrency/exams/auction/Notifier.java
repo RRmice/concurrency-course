@@ -2,12 +2,11 @@ package course.concurrency.exams.auction;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 
 public class Notifier {
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(6);
+    private final ExecutorService executorService = new ForkJoinPool();
 
     public void sendOutdatedMessage(Bid bid) {
         CompletableFuture.runAsync(this::imitateSending, executorService);
