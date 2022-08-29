@@ -1,46 +1,50 @@
 package course.concurrency.m3_shared.immutable;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class OrderService {
 
-    private Map<Long, Order> currentOrders = new HashMap<>();
-    private long nextId = 0L;
+    private final ConcurrentHashMap<Long, AtomicReference<Order>> currentOrders = new ConcurrentHashMap<>();
 
-    private synchronized long nextId() {
-        return nextId++;
-    }
-
-    public synchronized long createOrder(List<Item> items) {
-        long id = nextId();
+    public long createOrder(List<Item> items) {
         Order order = new Order(items);
-        order.setId(id);
-        currentOrders.put(id, order);
-        return id;
+        currentOrders.put(order.getId(), new AtomicReference<>(order));
+        return order.getId();
     }
 
-    public synchronized void updatePaymentInfo(long orderId, PaymentInfo paymentInfo) {
-        currentOrders.get(orderId).setPaymentInfo(paymentInfo);
-        if (currentOrders.get(orderId).checkStatus()) {
-            deliver(currentOrders.get(orderId));
+    public void updatePaymentInfo(long orderId, PaymentInfo paymentInfo) {
+        Order current, recent;
+        do {
+            current = currentOrders.get(orderId).get();
+            recent = current.withPaymentInfo(paymentInfo);
+        } while (!currentOrders.get(orderId).compareAndSet(current, recent));
+        deliver(recent);
+    }
+
+    public void setPacked(long orderId) {
+        Order current, recent;
+        do {
+            current = currentOrders.get(orderId).get();
+            recent = current.doPack();
+        } while (!currentOrders.get(orderId).compareAndSet(current, recent));
+        deliver(recent);
+    }
+
+    private void deliver(Order order) {
+        if (order.checkStatus()) {
+           return;
         }
+
+        Order current, recent;
+        do {
+            current = currentOrders.get(order.getId()).get();
+            recent = current.withStatus(Order.Status.DELIVERED);
+        } while (!currentOrders.get(order.getId()).compareAndSet(current, recent));
     }
 
-    public synchronized void setPacked(long orderId) {
-        currentOrders.get(orderId).setPacked(true);
-        if (currentOrders.get(orderId).checkStatus()) {
-            deliver(currentOrders.get(orderId));
-        }
-    }
-
-    private synchronized void deliver(Order order) {
-        /* ... */
-        currentOrders.get(order.getId()).setStatus(Order.Status.DELIVERED);
-    }
-
-    public synchronized boolean isDelivered(long orderId) {
-        return currentOrders.get(orderId).getStatus().equals(Order.Status.DELIVERED);
+    public boolean isDelivered ( long orderId){
+        return currentOrders.get(orderId).get().getStatus().equals(Order.Status.DELIVERED);
     }
 }
